@@ -1,0 +1,21 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+
+# Hosting and local tooling
+.vercel/
+.netlify/
+.idea/
+**/.idea/
+*.jks
+*.keystore
+*.p12
+.DS_Store
+*.log
+npm-debug.log*
