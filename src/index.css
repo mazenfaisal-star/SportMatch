@@ -102,5 +102,18 @@
 .admin-audit-row b{font-size:10px;color:#304a67}
 .admin-audit-row small{font-size:8px;color:#91a0b1}
 .admin-audit-row code{font-size:8px;color:#8798ac;background:#f5f7fa;padding:4px 6px;border-radius:5px;direction:ltr}
+
+.app-update-backdrop{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:20px;background:rgba(13,25,43,.62);backdrop-filter:blur(5px)}
+.app-update-card{position:relative;width:min(100%,410px);padding:30px 25px 23px;border:1px solid #e8eef7;border-radius:22px;background:#fff;box-shadow:0 24px 70px #071a3440;text-align:center;color:#213b58}
+.app-update-close{position:absolute;top:13px;left:13px;width:34px;height:34px;display:grid;place-items:center;border:1px solid #e7edf5;border-radius:10px;background:#fff;color:#718198;cursor:pointer}
+.app-update-icon{width:54px;height:54px;margin:0 auto 14px;display:grid;place-items:center;border-radius:17px;background:#edf5ff;color:#3474db}
+.app-update-eyebrow{color:#3474db;font-size:11px;font-weight:800}
+.app-update-card h2{margin:6px 0;color:#183452;font-size:22px;font-weight:900}
+.app-update-version{margin:0;color:#718198;font-size:12px}
+.app-update-notes{margin:16px 0 0;padding:12px;border-radius:12px;background:#f6f8fb;color:#506783;font-size:11px;line-height:1.8;text-align:right}
+.app-update-actions{display:flex;flex-direction:column;gap:8px;margin-top:21px}
+.app-update-actions .button{justify-content:center;min-height:44px}
+.app-update-hint{display:block;margin-top:13px;color:#91a0b1;font-size:9px;line-height:1.8}
+@media(max-width:420px){.app-update-card{padding:26px 18px 19px;border-radius:18px}.app-update-card h2{font-size:19px}}
 @media(max-width:900px){.admin-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.admin-page{gap:12px}.admin-stat-grid{gap:8px}.admin-stat{min-height:105px;padding:13px}.admin-stat>strong{font-size:23px}.admin-stat>span{font-size:9px}.admin-stat>i{width:29px;height:29px;left:10px;top:10px}.admin-users-panel,.admin-audit-panel{padding:13px}.admin-toolbar{align-items:stretch;flex-direction:column}.admin-role-filter{justify-content:space-between}.admin-role-filter select{flex:1}.admin-security-note{padding:12px}.admin-security-note span{font-size:9px}}
