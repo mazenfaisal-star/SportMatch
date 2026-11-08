@@ -15,6 +15,9 @@ import { isSupabaseConfigured, supabase, supabaseConfigIssue } from './lib/supab
 const authRedirectUrl = () => Capacitor.isNativePlatform()
   ? 'com.sportmatch.app://auth/callback'
   : window.location.origin;
+const passwordRecoveryRedirectUrl = () => Capacitor.isNativePlatform()
+  ? 'com.sportmatch.app://auth/callback'
+  : `${window.location.origin}/auth/reset-password`;
 
 const SPORTS = [
   { name: 'كرة القدم', icon: '⚽', color: 'green' },
@@ -92,8 +95,11 @@ function errorText(error) {
   const message = String(error?.message || '');
   if (/Invalid login credentials/i.test(message)) return 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
   if (/Email not confirmed/i.test(message)) return 'أكد بريدك الإلكتروني من الرسالة المرسلة إليك أولًا.';
+  if (/email_address_not_authorized/i.test(message)) return 'Supabase لا يرسل حاليًا إلا لبريد أعضاء فريق المشروع. فعّل SMTP مخصصًا لإرسال الرسائل للعملاء.';
+  if (/over_email_send_rate_limit|email rate limit exceeded/i.test(message)) return 'تم بلوغ حد رسائل البريد في Supabase. انتظر قليلًا أو فعّل SMTP مخصصًا.';
   if (/User already registered/i.test(message)) return 'هذا البريد مسجل بالفعل. جرّب تسجيل الدخول.';
   if (/rate.?limit|too many requests|\b429\b/i.test(message)) return 'تم تنفيذ محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.';
+  if (/session.*missing|otp_expired|invalid.*(token|grant)|flow state|رابط الاستعادة/i.test(message)) return 'رابط الاستعادة منتهي أو لم يكتمل على نفس الجهاز. اطلب رابطًا جديدًا وافتحه من نفس المتصفح أو التطبيق.';
   if (/weak password|password.*(length|characters)/i.test(message)) return 'كلمة المرور لا تحقق متطلبات الأمان المحددة في إعدادات الحساب.';
   if (/row-level security|permission denied|not allowed/i.test(message)) return 'هذا الإجراء غير مسموح لهذا الحساب. راجع صلاحيات الحساب أو اطلب المساعدة.';
   // Never expose raw Postgres, Auth, or infrastructure errors in the interface.
@@ -197,12 +203,19 @@ export default function App() {
       setSession(data?.session ?? null);
       setAuthLoading(false);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!mounted) return;
       setSession(nextSession);
       setIsDemo(false);
+      if (event === 'PASSWORD_RECOVERY') {
+        setAuthMode('update_password');
+        setAuthMessage('اكتب كلمة المرور الجديدة ثم احفظها.');
+      }
     });
-    if (window.location.hash.includes('type=recovery')) setAuthMode('update_password');
+    const recoveryRoute = window.location.pathname === '/auth/reset-password'
+      || new URLSearchParams(window.location.search).get('auth') === 'recovery'
+      || new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
+    if (recoveryRoute) setAuthMode('update_password');
     return () => {
       mounted = false;
       listener?.subscription?.unsubscribe();
@@ -427,15 +440,20 @@ export default function App() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else if (authMode === 'reset') {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: authRedirectUrl() });
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: passwordRecoveryRedirectUrl() });
         if (error) throw error;
         setAuthMessage('لو البريد مسجل، هتوصلك رسالة لإعادة تعيين كلمة المرور.');
       } else if (authMode === 'update_password') {
+        if (!session) throw new Error('رابط الاستعادة منتهي أو غير صالح. اطلب رابطًا جديدًا وافتحه من نفس المتصفح أو التطبيق.');
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
-        setAuthMessage('تم تحديث كلمة المرور. تقدر تستخدمها في تسجيل الدخول.');
+        await supabase.auth.signOut();
+        setSession(null);
+        setProfile(null);
+        setPageError('');
         setAuthMode('login');
-        window.history.replaceState({}, document.title, window.location.pathname);
+        setAuthMessage('تم تحديث كلمة المرور بنجاح. سجّل الدخول بها الآن.');
+        window.history.replaceState({}, document.title, '/');
       }
     } catch (error) {
       setAuthMessage(errorText(error));
